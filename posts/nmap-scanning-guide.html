@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nmap Port Scanning for Beginners: Practical Guide with Real Outputs — LinuxPedia</title>
+  <meta name="description" content="A practical, hands-on beginner guide to Nmap network scanning. Learn host discovery, SYN stealth scans, service version detection, and output parsing without the fluff.">
+  <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="container nav-wrapper">
+      <a href="../index.html" class="logo">
+        <img src="../logo.jpg" alt="LinuxPedia Logo" class="logo-img">
+        <span class="logo-text">LinuxPedia</span>
+      </a>
+      <div class="nav-right">
+        <!-- Social Media & Contact Links -->
+        <div class="social-links">
+          <a href="https://www.instagram.com/pedialinux/" target="_blank" rel="noopener noreferrer" class="social-btn instagram" title="Follow LinuxPedia on Instagram" aria-label="Instagram">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+          </a>
+          <a href="https://www.facebook.com/pedialinux" target="_blank" rel="noopener noreferrer" class="social-btn facebook" title="Follow LinuxPedia on Facebook" aria-label="Facebook">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+          </a>
+          <a href="mailto:pedialinux@gmail.com" class="social-btn email" title="Contact Us: pedialinux@gmail.com" aria-label="Email">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </a>
+        </div>
+        <button id="theme-toggle" class="theme-btn">🌙 Dark</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Article Body -->
+  <main class="article-container">
+    <a href="../index.html" class="back-link">&larr; Back to all articles</a>
+
+    <article class="post-header">
+      <span class="badge badge-hacking">Ethical Hacking</span>
+      <h1>Nmap Port Scanning for Beginners: Practical Guide with Real Outputs</h1>
+      <div class="meta">
+        Published on <strong>November 2026</strong> • By <strong>LinuxPedia</strong> • 6 min read
+      </div>
+    </article>
+
+    <div class="post-content">
+
+      <div class="notice warning">
+        <strong>⚖️ Ethical Boundary Reminder:</strong> Only scan targets you own (like your home router, local virtual machines, or authorized labs like TryHackMe and HackTheBox) or networks where you have written permission. Unauthorized port scanning can get your IP banned by network providers.
+      </div>
+
+      <p>
+        When you first open a terminal and decide to learn network security, Nmap is almost always the first tool people tell you to install. But most tutorials dump thirty command-line flags on you at once, without explaining what actually happens across the wire when you hit Enter.
+      </p>
+
+      <p>
+        In this guide, we will step through how Nmap actually talks to a target machine, the four scan flags you will use 90% of the time, and how to read the terminal output so you know what services are running.
+      </p>
+
+      <h2>1. The First Test: Scanning an Authorized Target</h2>
+      <p>
+        If you do not have a home lab running yet, the creators of Nmap maintain an official server specifically for testing scans. You can point your terminal at <code>scanme.nmap.org</code> without getting in trouble.
+      </p>
+
+      <p>
+        Here is the most basic scan you can run:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>nmap scanme.nmap.org</code></pre>
+      </div>
+
+      <p>
+        When you run this bare command, Nmap scans the <strong>top 1,000 most common TCP ports</strong>. It does not scan all 65,535 ports by default because scanning every single port on a remote server would take several minutes.
+      </p>
+
+      <h2>2. Understanding the Output States</h2>
+      <p>
+        Once the scan completes, you will see a small table in your terminal. Here is what an actual result looks like:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>PORT    STATE SERVICE
+22/tcp  open  ssh
+80/tcp  open  http
+9929/tcp open  nping-echo</code></pre>
+      </div>
+
+      <p>
+        Each port will report one of three main states:
+      </p>
+
+      <ul>
+        <li><strong>open:</strong> An application on the target machine is actively listening for incoming connections on that port (like a web server on port 80).</li>
+        <li><strong>closed:</strong> The target received our probe packet, but no service is listening on that port. It sends back a quick reset packet to tell us nothing is there.</li>
+        <li><strong>filtered:</strong> A firewall or packet filter blocked our packet or dropped the response. Nmap cannot tell if the port is open or closed because no answer ever came back.</li>
+      </ul>
+
+      <h2>3. Finding Live Hosts on Your Local Network (-sn)</h2>
+      <p>
+        Before you scan ports on an entire subnet, you should first check which IP addresses are actually powered on. Scanning ports on fifty offline machines will waste huge amounts of time waiting for timeouts.
+      </p>
+
+      <p>
+        Use the <code>-sn</code> flag (historically known as a ping sweep) to check for responsive hosts without touching their ports:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>sudo nmap -sn 192.168.1.0/24</code></pre>
+      </div>
+
+      <p>
+        In less than ten seconds, Nmap will return a clean list of every active phone, laptop, and smart TV on your local network along with their MAC addresses and hardware vendors.
+      </p>
+
+      <h2>4. The SYN Stealth Scan (-sS) vs Normal Scan (-sT)</h2>
+      <p>
+        If you run Nmap without root privileges, your operating system forces Nmap to perform a full TCP connect scan (<code>-sT</code>). That means your computer completes the full three-way handshake: it sends a SYN, receives a SYN-ACK, and sends an ACK. This establishes a real connection that gets logged by most web applications.
+      </p>
+
+      <p>
+        When you run Nmap with <code>sudo</code>, it defaults to the <strong>SYN Stealth scan (<code>-sS</code>)</strong>:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>sudo nmap -sS 192.168.1.50</code></pre>
+      </div>
+
+      <p>
+        In a SYN scan, Nmap sends the initial probe (SYN), waits for the target to say "Yes, I am open" (SYN-ACK), and then immediately sends back a reset packet (RST) instead of completing the connection. The target port is verified as open, but the connection was never finalized, keeping it out of many basic application logs.
+      </p>
+
+      <h2>5. Detecting Exact Service Versions (-sV)</h2>
+      <p>
+        Knowing port 80 is open only tells you there is a web server. But is it running Apache 2.4.41? Nginx 1.18? Or an outdated Python web script from 2018?
+      </p>
+
+      <p>
+        Add the <code>-sV</code> flag to inspect service banners and find the exact software version:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>sudo nmap -sV -p 22,80,443 192.168.1.50</code></pre>
+      </div>
+
+      <p>
+        Nmap will send custom banner probes to those specific ports and report the exact daemon name, such as <code>OpenSSH 8.9p1 Ubuntu</code> or <code>Apache httpd 2.4.52</code>. This is where security auditors find out if software needs to be patched against known vulnerabilities.
+      </p>
+
+      <h2>6. The Everyday Workhorse Command</h2>
+      <p>
+        When you are practicing on a HackTheBox machine or auditing your own test server, here is the balanced command string used by real practitioners:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>sudo nmap -sC -sV -T4 192.168.1.50 -oN initial_scan.txt</code></pre>
+      </div>
+
+      <p>
+        Here is what each flag does:
+      </p>
+      <ul>
+        <li><code>-sC</code>: Runs the default set of safe, non-destructive Nmap scripts to gather useful headers and TLS certificate details.</li>
+        <li><code>-sV</code>: Extracts service version numbers.</li>
+        <li><code>-T4</code>: Sets the timing speed to aggressive so you do not wait all afternoon on a fast, reliable local network.</li>
+        <li><code>-oN initial_scan.txt</code>: Saves the output directly into a clean text file so you never lose your findings when you close your terminal window.</li>
+      </ul>
+
+      <h2>7. Scanning All 65,535 Ports (-p-)</h2>
+      <p>
+        Remember that standard scans only inspect the top 1,000 ports. Administrators frequently move SSH from port 22 to port 2222, or run development dashboards on port 8080 or port 9000.
+      </p>
+
+      <p>
+        To make sure you never miss a hidden service, run a full sweep across all ports:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>sudo nmap -p- -T4 192.168.1.50</code></pre>
+      </div>
+
+      <h2>Quick Reference Cheatsheet</h2>
+      <ul>
+        <li><code>nmap target</code>: Quick scan of the top 1,000 TCP ports.</li>
+        <li><code>sudo nmap -sn 192.168.1.0/24</code>: Find all active devices on your local network.</li>
+        <li><code>sudo nmap -sS target</code>: Fast, half-open SYN stealth scan.</li>
+        <li><code>nmap -p 80,443,8080 target</code>: Scan only specific ports.</li>
+        <li><code>nmap -sV -p 80 target</code>: Identify exact service and version numbers.</li>
+        <li><code>nmap -oN results.txt target</code>: Save output to a readable text file.</li>
+      </ul>
+
+      <h2>Summary</h2>
+      <p>
+        Network scanning is not about memorizing fifty obscure flags. It is about working in a sensible order: find out who is online first, check which ports are listening, pull the exact service versions, and save your notes in a file.
+      </p>
+      <p>
+        Try running your first ping sweep on your home router today, or test against <code>scanme.nmap.org</code>. If you run into any weird port states or timeout errors, feel free to drop a message to our community page!
+      </p>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-socials">
+        <a href="https://www.instagram.com/pedialinux/" target="_blank" rel="noopener noreferrer" class="social-btn instagram" title="Follow LinuxPedia on Instagram" aria-label="Instagram">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+        </a>
+        <a href="https://www.facebook.com/pedialinux" target="_blank" rel="noopener noreferrer" class="social-btn facebook" title="Follow LinuxPedia on Facebook" aria-label="Facebook">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+        </a>
+        <a href="mailto:pedialinux@gmail.com" class="social-btn email" title="Contact Us: pedialinux@gmail.com" aria-label="Email">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </a>
+      </div>
+      <div class="footer-contact">
+        Contact us: <a href="mailto:pedialinux@gmail.com">pedialinux@gmail.com</a>
+      </div>
+      <div class="footer-links">
+        <a href="../privacy.html">Privacy Policy</a> • 
+        <a href="../disclaimer.html">Ethical Hacking Disclaimer & Terms</a>
+      </div>
+      <p style="margin-top: 10px;">&copy; 2026 LinuxPedia. Independent & Open Source.</p>
+    </div>
+  </footer>
+
+  <!-- Floating Back to Top Button -->
+  <button id="back-to-top" class="back-to-top" title="Scroll to top" aria-label="Scroll to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m18 15-6-6-6 6"/>
+    </svg>
+  </button>
+
+  <script src="../script.js"></script>
+</body>
+</html>
