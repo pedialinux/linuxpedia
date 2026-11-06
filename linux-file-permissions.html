@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Linux File Permissions Made Simple: chmod, chown, and Octal Math Demystified — LinuxPedia</title>
+  <meta name="description" content="A practical beginner guide to understanding Linux file permissions. Learn how to read rwx strings, master octal numbers (4, 2, 1), fix SSH key errors, and stop using chmod 777.">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="container nav-wrapper">
+      <a href="index.html" class="logo">
+        <img src="logo.jpg" alt="LinuxPedia Logo" class="logo-img">
+        <span class="logo-text">LinuxPedia</span>
+      </a>
+      <div class="nav-right">
+        <!-- Social Media & Contact Links -->
+        <div class="social-links">
+          <a href="https://www.instagram.com/pedialinux/" target="_blank" rel="noopener noreferrer" class="social-btn instagram" title="Follow LinuxPedia on Instagram" aria-label="Instagram">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+          </a>
+          <a href="https://www.facebook.com/pedialinux" target="_blank" rel="noopener noreferrer" class="social-btn facebook" title="Follow LinuxPedia on Facebook" aria-label="Facebook">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+          </a>
+          <a href="mailto:pedialinux@gmail.com" class="social-btn email" title="Contact Us: pedialinux@gmail.com" aria-label="Email">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </a>
+        </div>
+        <button id="theme-toggle" class="theme-btn">🌙 Dark</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Article Body -->
+  <main class="article-container">
+    <a href="index.html" class="back-link">&larr; Back to all articles</a>
+
+    <article class="post-header">
+      <span class="badge badge-linux">Linux & SysAdmin</span>
+      <h1>Linux File Permissions Made Simple: chmod, chown, and Octal Math Demystified</h1>
+      <div class="meta">
+        Published on <strong>November 2026</strong> • By <strong>LinuxPedia</strong> • 6 min read
+      </div>
+    </article>
+
+    <div class="post-content">
+
+      <div class="notice warning">
+        <strong>⚠️ Stop Typing chmod 777:</strong> When a bash script or web server throws a permission error, the quick StackOverflow copy-paste is often <code>chmod -R 777</code>. Doing this gives every local user and web service permission to modify or execute your files. This guide will show you how to set exact, secure permissions instead.
+      </div>
+
+      <p>
+        Every beginner in Linux eventually runs into a wall with three words: <em>Permission denied</em>. You write a bash script, try to run it with <code>./deploy.sh</code>, and the terminal refuses. Or you copy an SSH key to a remote server, and SSH complains that your private key file is too open.
+      </p>
+
+      <p>
+        Linux file permissions look like random letters and numbers at first glance: <code>-rwxr-xr--</code>, <code>chmod 755</code>, <code>chown www-data:www-data</code>. But once you understand the simple three-part system and basic addition, reading and setting permissions becomes second nature.
+      </p>
+
+      <h2>1. Anatomy of a Permission String</h2>
+      <p>
+        When you run <code>ls -l</code> inside any Linux directory, the terminal prints a ten-character permission string on the far left of each line. Here is what an actual terminal entry looks like:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>-rwxr-xr-- 1 pediaadmin developers 4096 Nov 06 10:00 script.sh</code></pre>
+      </div>
+
+      <p>
+        Let us split those ten characters into four distinct pieces:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>[ - ]   [ rwx ]   [ r-x ]   [ r-- ]
+Type    Owner     Group     Others</code></pre>
+      </div>
+
+      <ul>
+        <li><strong>Character 1 (Type):</strong> A dash <code>-</code> means a regular file. A <code>d</code> means a directory. An <code>l</code> means a symbolic link.</li>
+        <li><strong>Characters 2 to 4 (Owner):</strong> What the user who owns the file can do. In this example, <code>rwx</code> means read, write, and execute.</li>
+        <li><strong>Characters 5 to 7 (Group):</strong> What members of the file's assigned group can do. Here, <code>r-x</code> means read and execute, but no permission to edit or write.</li>
+        <li><strong>Characters 8 to 10 (Others):</strong> What everyone else on the entire system can do. Here, <code>r--</code> means read only.</li>
+      </ul>
+
+      <h2>2. What r, w, and x Actually Mean</h2>
+      <p>
+        The permissions behave slightly differently depending on whether you are looking at a plain file or a directory:
+      </p>
+
+      <ul>
+        <li><strong>r (Read):</strong> On a file, you can open and read its contents. On a directory, you can list the files inside with <code>ls</code>.</li>
+        <li><strong>w (Write):</strong> On a file, you can modify or save changes. On a directory, you can create, rename, or delete files inside it.</li>
+        <li><strong>x (Execute):</strong> On a file, you can run it as a program or bash script. On a directory, it allows you to <code>cd</code> into it and access its contents.</li>
+      </ul>
+
+      <h2>3. The Simple Math of Octal Numbers (4, 2, 1)</h2>
+      <p>
+        Instead of typing letters, Linux sysadmins almost always use three-digit numbers like <code>755</code> or <code>644</code>. These numbers are calculated using elementary school addition:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>Read    (r) = 4
+Write   (w) = 2
+Execute (x) = 1
+No permission = 0</code></pre>
+      </div>
+
+      <p>
+        Whenever you see a three-digit permission number, each digit represents one group of users: <strong>[Owner] [Group] [Others]</strong>. You just add the numbers together:
+      </p>
+
+      <ul>
+        <li><strong>7 (4 + 2 + 1):</strong> Full access (read, write, and execute).</li>
+        <li><strong>6 (4 + 2):</strong> Read and write (standard for normal files you edit).</li>
+        <li><strong>5 (4 + 1):</strong> Read and execute (can run, but cannot modify).</li>
+        <li><strong>4 (4):</strong> Read only.</li>
+        <li><strong>0:</strong> Zero access. Complete lockout for that group.</li>
+      </ul>
+
+      <p>
+        Let us look at two real examples:
+      </p>
+      <ul>
+        <li><strong>chmod 644 file.txt:</strong> Owner gets 6 (read + write). Group gets 4 (read only). Others get 4 (read only). This is the safe default for 95% of documents and web assets.</li>
+        <li><strong>chmod 755 script.sh:</strong> Owner gets 7 (read, write, execute). Group gets 5 (read + execute). Others get 5 (read + execute). This is standard for shell scripts and system binaries.</li>
+      </ul>
+
+      <h2>4. Using chmod: Number Method vs Symbolic Method</h2>
+      <p>
+        You have two ways to change permissions on Linux using the <code>chmod</code> (change mode) command.
+      </p>
+
+      <h3>The Number Method</h3>
+      <p>
+        Fastest when you want to set the exact full state of a file in one command:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>chmod 644 config.json
+chmod 755 backup.sh</code></pre>
+      </div>
+
+      <h3>The Symbolic Shortcut (+ and -)</h3>
+      <p>
+        When you just want to make a script executable without recalculating the existing read and write permissions, use <code>+x</code>:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code># Make a script executable for yourself
+chmod +x run_audit.sh
+
+# Remove write access from everyone except the owner
+chmod go-w sensitive_notes.txt</code></pre>
+      </div>
+
+      <h2>5. Fixing the Infamous SSH Key Error (chmod 600)</h2>
+      <p>
+        If you create an SSH private key or download a <code>.pem</code> file from AWS or DigitalOcean, trying to connect will often throw an error: <em>"Permissions 0644 for id_rsa are too open. It is required that your private key files are NOT accessible by others."</em>
+      </p>
+
+      <p>
+        SSH checks file permissions before sending your key. Because a private key holds your identity, other accounts on your computer must not be able to read it.
+      </p>
+
+      <p>
+        Fix it instantly by restricting access exclusively to your own user account:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>chmod 600 ~/.ssh/id_ed25519
+chmod 700 ~/.ssh</code></pre>
+      </div>
+
+      <p>
+        <code>600</code> means: Owner gets Read + Write (4+2 = 6). Group gets 0. Others get 0. SSH is happy, and your connection succeeds.
+      </p>
+
+      <h2>6. Changing Ownership with chown</h2>
+      <p>
+        Permissions dictate what users can do, but who actually owns the file? The <code>chown</code> (change owner) command sets the user and group:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code># Change owner to pediaadmin
+sudo chown pediaadmin file.txt
+
+# Change both owner and group at once (user:group)
+sudo chown pediaadmin:developers file.txt
+
+# Recursively fix ownership of an entire web folder
+sudo chown -R www-data:www-data /var/www/html</code></pre>
+      </div>
+
+      <h2>Everyday Permission Cheat Sheet</h2>
+      <ul>
+        <li><code>644</code>: Regular files (HTML, images, text, config files). Owner edits, others can only read.</li>
+        <li><code>755</code>: Executable scripts and directories. Owner edits and runs, others can read and enter.</li>
+        <li><code>600</code>: Private keys and secrets (SSH private keys, password vaults, .env files). Only you can read or write.</li>
+        <li><code>700</code>: Private directories (like <code>~/.ssh/</code>). Nobody else can see inside or enter.</li>
+        <li><code>777</code>: Almost never needed in production. Leaves your file completely unprotected against any process on the machine.</li>
+      </ul>
+
+      <h2>Summary</h2>
+      <p>
+        Linux permissions are not black magic. Just remember the numbers: <strong>Read is 4, Write is 2, Execute is 1</strong>. The three digits correspond to Owner, Group, and Others.
+      </p>
+      <p>
+        Next time you encounter a <em>Permission denied</em> prompt, avoid the temptation to throw <code>chmod 777</code> at the problem. Check ownership with <code>ls -l</code>, add execute rights with <code>chmod +x</code>, or set clean <code>644</code> or <code>755</code> values. Stay safe and audit carefully!
+      </p>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-socials">
+        <a href="https://www.instagram.com/pedialinux/" target="_blank" rel="noopener noreferrer" class="social-btn instagram" title="Follow LinuxPedia on Instagram" aria-label="Instagram">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+        </a>
+        <a href="https://www.facebook.com/pedialinux" target="_blank" rel="noopener noreferrer" class="social-btn facebook" title="Follow LinuxPedia on Facebook" aria-label="Facebook">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+        </a>
+        <a href="mailto:pedialinux@gmail.com" class="social-btn email" title="Contact Us: pedialinux@gmail.com" aria-label="Email">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </a>
+      </div>
+      <div class="footer-contact">
+        Contact us: <a href="mailto:pedialinux@gmail.com">pedialinux@gmail.com</a>
+      </div>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a> • 
+        <a href="disclaimer.html">Ethical Hacking Disclaimer & Terms</a>
+      </div>
+      <p style="margin-top: 10px;">&copy; 2026 LinuxPedia. Independent & Open Source.</p>
+    </div>
+  </footer>
+
+  <!-- Floating Back to Top Button -->
+  <button id="back-to-top" class="back-to-top" title="Scroll to top" aria-label="Scroll to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m18 15-6-6-6 6"/>
+    </svg>
+  </button>
+
+  <script src="script.js"></script>
+</body>
+</html>
