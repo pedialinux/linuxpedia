@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wireshark for Beginners: How Packet Sniffing Works (And What Hackers Actually See) - LinuxPedia</title>
+  <meta name="description" content="A practical beginner guide to Wireshark network packet analysis. Learn promiscuous mode, display filters, following TCP streams, and catching unencrypted credentials.">
+  <meta name="google-site-verification" content="cBMbyyNKt8IDdu6YmULkjBzNTZfEZ_PSIlwlpaiqn7s" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://pedialinux.github.io/linuxpedia/wireshark-packet-analysis.html">
+  <meta property="og:title" content="Wireshark for Beginners: How Packet Sniffing Works - LinuxPedia">
+  <meta property="og:description" content="Learn what packet sniffers actually see across public Wi-Fi, essential display filters, and how to follow TCP streams.">
+  <meta property="og:image" content="https://pedialinux.github.io/linuxpedia/banner.jpg">
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Wireshark for Beginners: How Packet Sniffing Works - LinuxPedia">
+  <meta name="twitter:description" content="A hands-on guide to Wireshark packet capture, filters, and network traffic inspection.">
+  <meta name="twitter:image" content="https://pedialinux.github.io/linuxpedia/banner.jpg">
+
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="container nav-wrapper">
+      <a href="index.html" class="logo">
+        <img src="logo.jpg" alt="LinuxPedia Logo" class="logo-img">
+        <span class="logo-text">LinuxPedia</span>
+      </a>
+      <div class="nav-right">
+        <div class="social-links">
+          <a href="https://www.instagram.com/pedialinux/" target="_blank" rel="noopener noreferrer" class="social-btn instagram" title="Follow LinuxPedia on Instagram" aria-label="Instagram">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+          </a>
+          <a href="https://www.facebook.com/pedialinux" target="_blank" rel="noopener noreferrer" class="social-btn facebook" title="Follow LinuxPedia on Facebook" aria-label="Facebook">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+          </a>
+          <a href="https://www.youtube.com/channel/UCaPm5MMOKsJ3Swpit-ul9aA" target="_blank" rel="noopener noreferrer" class="social-btn youtube" title="Follow LinuxPedia on YouTube" aria-label="YouTube">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/>
+              <polygon points="10 15 15 12 10 9" fill="currentColor"/>
+            </svg>
+          </a>
+          <a href="mailto:pedialinux@gmail.com" class="social-btn email" title="Contact Us: pedialinux@gmail.com" aria-label="Email">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </a>
+        </div>
+        <button id="theme-toggle" class="theme-btn">🌙 Dark</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Article Body -->
+  <main class="article-container">
+    <a href="index.html" class="back-link">&larr; Back to all articles</a>
+
+    <article class="post-header">
+      <span class="badge badge-hacking">Ethical Hacking</span>
+      <h1>Wireshark for Beginners: How Packet Sniffing Works (And What Hackers Actually See)</h1>
+      <div class="meta">
+        Published on <strong>November 2026</strong> • By <strong>LinuxPedia</strong> • 7 min read
+      </div>
+    </article>
+
+    <div class="post-content">
+
+      <div class="notice warning">
+        <strong>⚖️ Ethical Legal Notice:</strong> Capturing network traffic on networks you do not own or without explicit written permission from the network administrator is illegal under wiretapping and computer security laws (such as the CFAA). Only run Wireshark on your own home lab, virtual machines, or authorized training platforms like TryHackMe and HackTheBox.
+      </div>
+
+      <p>
+        Every time your phone opens a web page, syncs a background email, or sends a message, raw electrical and radio pulses travel through the air. In normal everyday use, your network card only looks at packets addressed specifically to its own MAC address and ignores everything else.
+      </p>
+
+      <p>
+        When a packet sniffer like Wireshark runs in <strong>promiscuous mode</strong>, it tells your network card to stop ignoring those other packets and capture every single frame flying across the segment. 
+      </p>
+
+      <p>
+        In this guide, we break down what packet sniffing actually does, how to isolate traffic with practical Wireshark display filters, how to extract plaintext passwords from unencrypted sessions, and how modern encryption protects you.
+      </p>
+
+      <h2>1. How Wireshark Listens: Promiscuous Mode Explained</h2>
+
+      <p>
+        Under default operating system rules, network interface cards (NICs) use hardware filtering. If a frame has destination MAC <code>AA:BB:CC:DD:EE:01</code> and your card is <code>AA:BB:CC:DD:EE:02</code>, the card drops it before your CPU ever notices.
+      </p>
+
+      <p>
+        When you launch Wireshark as an administrator or with packet capture capabilities (<code>CAP_NET_RAW</code>), Wireshark flips your NIC into promiscuous mode:
+      </p>
+
+      <ul>
+        <li><strong>On Wired Hubs or Switched Port Mirrors (SPAN):</strong> You see all packets copied to your physical port.</li>
+        <li><strong>On Open Public Wi-Fi:</strong> Because radio signals broadcast in every direction, an adapter running in monitor mode can capture all unencrypted 802.11 frames transmitted by devices around you.</li>
+      </ul>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>bash - installing wireshark &amp; tshark on linux</span>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code># On Debian / Ubuntu systems
+sudo apt update
+sudo apt install -y wireshark tshark
+
+# Grant capture rights to non-root users (recommended for security)
+sudo dpkg-reconfigure wireshark-common
+sudo usermod -aG wireshark $USER</code></pre>
+      </div>
+
+      <h2>2. The Interface: Reading the 3 Main Panes</h2>
+
+      <p>
+        When you start capturing on an active interface (like <code>wlan0</code> or <code>eth0</code>), thousands of packets scroll past every minute. Wireshark splits this firehose into three distinct visual sections:
+      </p>
+
+      <ol>
+        <li><strong>Packet List Pane (Top):</strong> Shows packet number, timestamp, source IP, destination IP, protocol (TCP, UDP, DNS, TLS), length, and high-level summary info.</li>
+        <li><strong>Packet Details Pane (Middle):</strong> Collapsible breakdown of the OSI model layers for the selected packet (Frame &rarr; Ethernet II &rarr; IPv4 &rarr; TCP/UDP &rarr; Application Layer).</li>
+        <li><strong>Packet Bytes Pane (Bottom):</strong> The raw hexadecimal dump and ASCII translation of the actual bits sent across the wire.</li>
+      </ol>
+
+      <h2>3. The Essential Display Filters You Must Memorize</h2>
+
+      <p>
+        Trying to find an issue without display filters is like looking for a needle in a digital haystack. You type display filters into the green bar at the top of Wireshark:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>wireshark-filters.txt - display filters cheat sheet</span>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code># Show only HTTP traffic (unencrypted web requests)
+http
+
+# Isolate traffic coming from or going to a specific target IP
+ip.addr == 192.168.1.50
+
+# Filter specifically by communication between two specific hosts
+ip.src == 192.168.1.50 && ip.dst == 192.168.1.1
+
+# Catch login submissions (HTTP POST requests)
+http.request.method == "POST"
+
+# Filter by standard web and secure web ports
+tcp.port == 80 || tcp.port == 443
+
+# Show all DNS name resolution queries
+dns</code></pre>
+      </div>
+
+      <h2>4. Catching Plaintext: Following a TCP Stream</h2>
+
+      <p>
+        When a website or legacy service uses unencrypted protocols (HTTP on port 80, FTP on port 21, Telnet on port 23), every keystroke travels across the network in clear ASCII text.
+      </p>
+
+      <p>
+        In a test lab environment, if a client submits an HTTP login form, Wireshark captures the entire packet payload. Here is what a captured HTTP POST packet looks like inside Wireshark:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>wireshark - packet details (unencrypted http post)</span>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>Hypertext Transfer Protocol
+    POST /login.php HTTP/1.1\r\n
+    Host: lab.local\r\n
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64)\r\n
+    Content-Type: application/x-www-form-urlencoded\r\n
+    Content-Length: 38\r\n
+    \r\n
+    [HTML Form URL Encoded: application/x-www-form-urlencoded]
+        username=admin&amp;password=SuperSecretPassword123!</code></pre>
+      </div>
+
+      <div class="notice">
+        <strong>💡 Pro Trick: "Follow TCP Stream"</strong><br>
+        Instead of reading individual packets one by one, right-click any TCP packet in the list and select <strong>Follow &rarr; TCP Stream</strong>. Wireshark reassembles the entire two-way conversation into a clean window (client requests in red, server responses in blue). If the protocol is unencrypted, the entire login conversation reads like a text chat.
+      </div>
+
+      <h2>5. What Happens When HTTPS (TLS 1.3) Is Used?</h2>
+
+      <p>
+        What happens when the same login happens over a modern HTTPS website?
+      </p>
+
+      <p>
+        When you filter by <code>tls</code>, you will see the initial TLS Handshake (Client Hello, Server Hello, Key Exchange). Once the handshake completes, all subsequent application data is encrypted with symmetric session keys.
+      </p>
+
+      <p>
+        Instead of seeing <code>username=admin&amp;password=...</code>, Wireshark only displays:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>wireshark - encrypted tls application data</span>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>Transport Layer Security
+    TLSv1.3 Record Layer: Application Data Protocol: Hypertext Transfer Protocol
+        Opaque Type: Application Data (23)
+        Version: TLS 1.2 (0x0303)
+        Length: 1420
+        Encrypted Application Data: 4a9f1c7d23e801b9ca55f042e18d6a33...</code></pre>
+      </div>
+
+      <p>
+        Anyone sniffing the packet sees pure cryptographic random noise. They can see that an IP connected to a server on port 443, but they cannot read the URL path, the session cookies, the POST parameters, or the passwords.
+      </p>
+
+      <h2>6. Sniffing From the Command Line with TShark</h2>
+
+      <p>
+        On headless Linux servers or lightweight cloud droplets where you don't have a graphical desktop installed, Wireshark includes a powerful command-line sibling called <strong>TShark</strong>.
+      </p>
+
+      <p>
+        You can inspect live traffic and extract specific fields directly into your terminal:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>bash - tshark command line extraction</span>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code># Sniff 20 HTTP requests on eth0 and print IP, Host header, and URI
+sudo tshark -i eth0 -c 20 -Y "http.request" -T fields -e ip.src -e http.host -e http.request.uri
+
+# Capture live traffic into a PCAP file for later analysis
+sudo tshark -i eth0 -w /tmp/capture.pcap
+
+# Read and filter an existing capture file without root rights
+tshark -r /tmp/capture.pcap -Y "dns"</code></pre>
+      </div>
+
+      <h2>7. The 3 Defensive Habits Every User Must Follow</h2>
+
+      <p>
+        Understanding how easy packet sniffing is on unencrypted networks makes defensive precautions obvious:
+      </p>
+
+      <ul>
+        <li><strong>Never enter credentials on plain HTTP pages:</strong> Look for the padlock. Modern browsers block HTTP logins by default, but internal local devices (like old home router admin pages or IoT cameras) still use plain HTTP.</li>
+        <li><strong>Use a trusted VPN on public networks:</strong> A VPN encapsulates your entire operating system traffic in an encrypted tunnel before it leaves your laptop, blinding anyone sniffing local coffee shop or airport Wi-Fi.</li>
+        <li><strong>Enable DNS over HTTPS (DoH):</strong> Even on HTTPS sites, traditional DNS lookups (asking which IP matches <code>example.com</code>) are sent in unencrypted UDP packets on port 53. Enabling DoH in your browser or operating system encrypts your DNS requests as well.</li>
+      </ul>
+
+      <p>
+        Wireshark is not a magic hacking tool; it is a microscope for the network. Once you understand how packets look in motion, securing your own systems becomes second nature.
+      </p>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-socials">
+        <a href="https://www.instagram.com/pedialinux/" target="_blank" rel="noopener noreferrer" class="social-btn instagram" title="Follow LinuxPedia on Instagram" aria-label="Instagram">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+        </a>
+        <a href="https://www.facebook.com/pedialinux" target="_blank" rel="noopener noreferrer" class="social-btn facebook" title="Follow LinuxPedia on Facebook" aria-label="Facebook">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+        </a>
+        <a href="https://www.youtube.com/channel/UCaPm5MMOKsJ3Swpit-ul9aA" target="_blank" rel="noopener noreferrer" class="social-btn youtube" title="Follow LinuxPedia on YouTube" aria-label="YouTube">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/>
+            <polygon points="10 15 15 12 10 9" fill="currentColor"/>
+          </svg>
+        </a>
+        <a href="mailto:pedialinux@gmail.com" class="social-btn email" title="Contact Us: pedialinux@gmail.com" aria-label="Email">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </a>
+      </div>
+      <div class="footer-contact">
+        Contact us: <a href="mailto:pedialinux@gmail.com">pedialinux@gmail.com</a>
+      </div>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a> • 
+        <a href="disclaimer.html">Ethical Hacking Disclaimer &amp; Terms</a>
+      </div>
+      <p style="margin-top: 10px;">&copy; 2026 LinuxPedia. Independent &amp; Open Source.</p>
+    </div>
+  </footer>
+
+  <!-- Floating Back to Top Button -->
+  <button id="back-to-top" class="back-to-top" title="Scroll to top" aria-label="Scroll to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m18 15-6-6-6 6"/>
+    </svg>
+  </button>
+
+  <script src="script.js"></script>
+</body>
+</html>
