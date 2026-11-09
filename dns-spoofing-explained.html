@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DNS Spoofing Explained: How Attackers Hijack Your Browser (And How to Defend) - LinuxPedia</title>
+  <meta name="description" content="A practical guide to DNS spoofing, rogue captive portals, and cache poisoning. Learn how domain redirection works and how to protect your devices with DNS-over-HTTPS.">
+  <meta name="google-site-verification" content="cBMbyyNKt8IDdu6YmULkjBzNTZfEZ_PSIlwlpaiqn7s" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://pedialinux.github.io/linuxpedia/dns-spoofing-explained.html">
+  <meta property="og:title" content="DNS Spoofing Explained: How Attackers Hijack Your Browser - LinuxPedia">
+  <meta property="og:description" content="Discover how rogue DNS servers redirect browser traffic to cloned portals, and learn to protect yourself using encrypted DNS.">
+  <meta property="og:image" content="https://pedialinux.github.io/linuxpedia/banner.jpg">
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="DNS Spoofing Explained: How Attackers Hijack Your Browser - LinuxPedia">
+  <meta name="twitter:description" content="Understand how DNS cache poisoning and rogue Wi-Fi gateways hijack domains, with concrete defensive steps.">
+  <meta name="twitter:image" content="https://pedialinux.github.io/linuxpedia/banner.jpg">
+
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="container nav-wrapper">
+      <a href="index.html" class="logo">
+        <img src="logo.jpg" alt="LinuxPedia Logo" class="logo-img">
+        <span class="logo-text">LinuxPedia</span>
+      </a>
+      <div class="nav-right">
+        <div class="social-links">
+          <a href="https://www.instagram.com/pedialinux/" target="_blank" rel="noopener noreferrer" class="social-btn instagram" title="Follow LinuxPedia on Instagram" aria-label="Instagram">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+          </a>
+          <a href="https://www.facebook.com/pedialinux" target="_blank" rel="noopener noreferrer" class="social-btn facebook" title="Follow LinuxPedia on Facebook" aria-label="Facebook">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+          </a>
+          <a href="https://www.youtube.com/channel/UCaPm5MMOKsJ3Swpit-ul9aA" target="_blank" rel="noopener noreferrer" class="social-btn youtube" title="Follow LinuxPedia on YouTube" aria-label="YouTube">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/>
+              <polygon points="10 15 15 12 10 9" fill="currentColor"/>
+            </svg>
+          </a>
+          <a href="mailto:pedialinux@gmail.com" class="social-btn email" title="Contact Us: pedialinux@gmail.com" aria-label="Email">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </a>
+        </div>
+        <button id="theme-toggle" class="theme-toggle" title="Toggle Dark/Light Mode" aria-label="Toggle Dark/Light Mode">
+          <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Article Content -->
+  <main class="container">
+    <div class="post-detail">
+      <span class="badge badge-hacking">Ethical Hacking</span>
+      <h1>DNS Spoofing Explained: How Attackers Hijack Your Browser (And How to Defend)</h1>
+      <div class="post-meta">
+        <span>November 2026</span>
+        <span>By LinuxPedia</span>
+        <span>8 min read</span>
+      </div>
+
+      <div class="callout warning">
+        <strong>Educational Purpose Only:</strong> The techniques discussed here demonstrate network vulnerabilities to help system administrators, security students, and home users configure encrypted DNS defenses. Testing these methods against unauthorized networks violates national and international computer fraud laws.
+      </div>
+
+      <p>
+        Imagine opening your laptop in a coffee shop or hotel lobby. You launch your browser, type <code>login.examplebank.com</code> into the address bar, and press Enter. The page loads with the exact colors, logos, and input fields you expect. You type your username and password, hit Submit, and get redirected right to the legitimate website.
+      </p>
+
+      <p>
+        Everything looked completely normal. Yet behind the scenes, an attacker on the same local network intercepted your domain lookup and pointed your browser to an IP address they control. Your login credentials were harvested before you even realized what happened.
+      </p>
+
+      <p>
+        This attack is known as <strong>DNS Spoofing</strong> (or DNS Cache Poisoning). To understand how it works and how to protect yourself, we have to look at how domain name resolution was designed in the early days of the internet.
+      </p>
+
+      <h2>1. The Internet Phonebook and the Flaw in Port 53</h2>
+
+      <p>
+        Computers do not communicate through human-friendly names like <code>linuxpedia.org</code>. They route network packets using numeric IP addresses like <code>104.21.45.18</code>. The <strong>Domain Name System (DNS)</strong> acts as a global directory that translates hostnames into IP addresses.
+      </p>
+
+      <p>
+        When you request a website, your computer follows a query path:
+      </p>
+
+      <ol>
+        <li>Your OS checks its local DNS cache and hosts file.</li>
+        <li>If missing, it sends a DNS query packet to your configured resolver (usually assigned by your local Wi-Fi router).</li>
+        <li>The resolver queries root servers, Top-Level Domain (TLD) servers, and authoritative nameservers until it finds the IP address.</li>
+        <li>The resolver returns that IP to your computer.</li>
+      </ol>
+
+      <div class="terminal-block">
+        <div class="terminal-header">
+          <span class="terminal-dot red"></span>
+          <span class="terminal-dot yellow"></span>
+          <span class="terminal-dot green"></span>
+          <span class="terminal-title">bash - standard dns lookup query</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code>$ dig example.com A +noall +answer
+
+; &lt;&lt;&gt;&gt; DiG 9.18.28 &lt;&lt;&gt;&gt; example.com A +noall +answer
+;; global options: +cmd
+example.com.            3600    IN      A       93.184.215.14</code></pre>
+      </div>
+
+      <p>
+        Here is the vulnerability: traditional DNS queries travel over <strong>UDP port 53</strong> in plain, unauthenticated text. There is no cryptographic signature verifying that the response came from the real server, and no encryption preventing someone on the local network from reading or faking the answer.
+      </p>
+
+      <h2>2. How DNS Spoofing Works on Local Wi-Fi</h2>
+
+      <p>
+        On a shared local network, an attacker does not need to hack the world root servers. They can poison the lookup right between your laptop and your local router using two primary methods:
+      </p>
+
+      <h3>Method A: Rogue DHCP and DNS Server</h3>
+      <p>
+        When your device joins an open Wi-Fi network, it broadcasts a DHCP request asking for an IP address, default gateway, and DNS server. An attacker running a rogue access point (or a rogue DHCP daemon) can respond faster than the real router, assigning their own computer as your default DNS resolver. Every single website lookup you make is routed directly through the attacker machine.
+      </p>
+
+      <h3>Method B: ARP Spoofing + DNS Response Injection</h3>
+      <p>
+        If the router is already configured, an attacker can use ARP cache poisoning to position themselves as the Man-in-the-Middle (MitM). They send gratuitous ARP replies telling your machine that the attacker MAC address belongs to the router IP.
+      </p>
+
+      <div class="terminal-block">
+        <div class="terminal-header">
+          <span class="terminal-dot red"></span>
+          <span class="terminal-dot yellow"></span>
+          <span class="terminal-dot green"></span>
+          <span class="terminal-title">bash - observing arp table manipulation</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code>$ ip neighbor show
+# Target gateway ARP entry poisoned to match attacker MAC
+192.168.1.1 dev wlan0 lladdr b4:2e:99:a1:4f:12 REACHABLE
+192.168.1.185 dev wlan0 lladdr b4:2e:99:a1:4f:12 REACHABLE</code></pre>
+      </div>
+
+      <p>
+        Once traffic passes through the attacker machine, their packet filter listens for incoming UDP 53 packets. When your computer asks "What is the IP of target-site.com?", the attacker immediately injects a forged DNS response packet with a matching Transaction ID:
+      </p>
+
+      <div class="terminal-block">
+        <div class="terminal-header">
+          <span class="terminal-dot red"></span>
+          <span class="terminal-dot yellow"></span>
+          <span class="terminal-dot green"></span>
+          <span class="terminal-title">dns spoofing response packet structure</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code>[Client Request]
+Query: target-site.com (Type A) -> Sent to 192.168.1.1:53
+
+[Attacker Injected Response (Wins the race!)]
+Response: target-site.com -> 192.168.1.185 (Attacker Web Server)
+TTL: 300 seconds
+
+[Real DNS Server Response (Arrives too late, discarded by client)]
+Response: target-site.com -> 93.184.215.14 (Legitimate IP)</code></pre>
+      </div>
+
+      <h2>3. The Fake Portal: What Happens After Redirection</h2>
+
+      <p>
+        Because UDP is stateless, your computer accepts the first valid-looking response it receives and discards any later packets. Your operating system caches <code>target-site.com = 192.168.1.185</code>.
+      </p>
+
+      <p>
+        When your browser connects to that IP, it reaches a local web server (often running Nginx or a lightweight Python server) hosting a cloned replica of the real login form. Here is what happens next:
+      </p>
+
+      <ol>
+        <li>The user sees a realistic login screen with familiar branding.</li>
+        <li>The user enters their credentials.</li>
+        <li>The local web server records the POST data to a local log file.</li>
+        <li>The server responds with an HTTP 302 redirect sending the user back to the authentic website, making it appear like a minor network glitch.</li>
+      </ol>
+
+      <div class="terminal-block">
+        <div class="terminal-header">
+          <span class="terminal-dot red"></span>
+          <span class="terminal-dot yellow"></span>
+          <span class="terminal-dot green"></span>
+          <span class="terminal-title">captured http post log on rogue server</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code>[HARVESTED POST REQUEST - /api/v1/auth]
+Host: target-site.com
+Origin: http://target-site.com
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) ...
+Payload: username=developer_alex&amp;password=SuperSecretPassword2026!
+Action: Credential written to access.log -> Redirecting client to genuine URL</code></pre>
+      </div>
+
+      <h2>4. Why HTTPS Throws Warnings (And Why People Click Through)</h2>
+
+      <p>
+        Modern browsers enforce HTTPS encryption. When a browser visits <code>https://target-site.com</code> on the fake IP, the attacker server cannot present a valid SSL/TLS certificate signed by a trusted Certificate Authority (CA) for that domain.
+      </p>
+
+      <p>
+        Your browser displays a red security warning: <em>"Your connection is not private (NET::ERR_CERT_COMMON_NAME_INVALID)"</em>.
+      </p>
+
+      <p>
+        However, attackers often combine DNS spoofing with <strong>Typosquatting</strong> (registering visually similar domains like <code>rn-bank.com</code> instead of <code>m-bank.com</code>) or using free Let's Encrypt certificates on custom lookalike domains. On public networks where captive portals are common, many users have been conditioned to click "Proceed Anyway" just to get online, walking directly into the trap.
+      </p>
+
+      <h2>5. How to Protect Yourself: Modern Encrypted DNS</h2>
+
+      <p>
+        Defending against DNS spoofing requires eliminating unauthenticated cleartext lookups. Here are the three most effective defenses:
+      </p>
+
+      <h3>Defense 1: Enable DNS-over-HTTPS (DoH) in Your Browser</h3>
+      <p>
+        DNS-over-HTTPS encrypts DNS queries inside standard HTTPS traffic on <strong>port 443</strong>. To an eavesdropper or local router, your DNS lookups look identical to regular encrypted web browsing. An attacker cannot inspect, redirect, or forge the responses.
+      </p>
+
+      <ul>
+        <li><strong>In Firefox:</strong> Settings &gt; Privacy &amp; Security &gt; DNS over HTTPS &gt; Choose "Max Protection" (e.g., Cloudflare or NextDNS).</li>
+        <li><strong>In Chrome / Brave:</strong> Settings &gt; Privacy &amp; Security &gt; Use Secure DNS &gt; Select a verified provider (Cloudflare 1.1.1.1 or Google).</li>
+      </ul>
+
+      <h3>Defense 2: Configure System-Wide Encrypted Resolvers in Linux</h3>
+      <p>
+        On modern Linux distributions (Ubuntu, Debian, Fedora), <code>systemd-resolved</code> can enforce DNS-over-TLS (DoT) across all applications, not just your web browser.
+      </p>
+
+      <div class="terminal-block">
+        <div class="terminal-header">
+          <span class="terminal-dot red"></span>
+          <span class="terminal-dot yellow"></span>
+          <span class="terminal-dot green"></span>
+          <span class="terminal-title">/etc/systemd/resolved.conf - encrypted dns configuration</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code>[Resolve]
+# Primary and fallback encrypted Quad9 / Cloudflare servers
+DNS=9.9.9.9#dns.quad9.net 1.1.1.1#cloudflare-dns.com
+FallbackDNS=149.112.112.112 1.0.0.1
+DNSOverTLS=yes
+DNSSEC=yes</code></pre>
+      </div>
+
+      <p>
+        After editing the configuration file, restart the resolved service to lock in your encrypted lookups:
+      </p>
+
+      <div class="terminal-block">
+        <div class="terminal-header">
+          <span class="terminal-dot red"></span>
+          <span class="terminal-dot yellow"></span>
+          <span class="terminal-dot green"></span>
+          <span class="terminal-title">bash - apply and verify secure dns status</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code>$ sudo systemctl restart systemd-resolved
+$ resolvectl status
+# Confirm DNSOverTLS is active:
+Link 2 (wlan0)
+  Current DNS Server: 9.9.9.9#dns.quad9.net
+         DNS Servers: 9.9.9.9#dns.quad9.net 1.1.1.1#cloudflare-dns.com
+       DNSOverTLS: yes
+           DNSSEC: yes/supported</code></pre>
+      </div>
+
+      <h3>Defense 3: Always Use a WireGuard or OpenVPN Tunnel</h3>
+      <p>
+        When you connect to an encrypted VPN tunnel, your computer routes all network traffic, including DNS requests, directly through the encrypted VPN gateway. Local Wi-Fi attackers only see meaningless encrypted UDP blobs passing to your VPN server.
+      </p>
+
+      <h2>Summary Checklist</h2>
+
+      <ul>
+        <li>Traditional DNS on port 53 has zero encryption and zero identity verification.</li>
+        <li>Attackers exploit this with rogue DHCP and ARP injection to win the packet race.</li>
+        <li>Never click past browser SSL/TLS certificate warnings on public Wi-Fi.</li>
+        <li>Activate DNS-over-HTTPS (DoH) or DNS-over-TLS (DoT) to secure domain queries.</li>
+        <li>Tunnel all public wireless traffic through a trusted VPN.</li>
+      </ul>
+
+      <p>
+        Securing your domain lookups is one of the highest-impact defensive habits you can build. Once your DNS queries are wrapped in TLS cryptography, local network eavesdroppers are locked out completely.
+      </p>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-socials">
+        <a href="https://www.instagram.com/pedialinux/" target="_blank" rel="noopener noreferrer" class="social-btn instagram" title="Follow LinuxPedia on Instagram" aria-label="Instagram">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+        </a>
+        <a href="https://www.facebook.com/pedialinux" target="_blank" rel="noopener noreferrer" class="social-btn facebook" title="Follow LinuxPedia on Facebook" aria-label="Facebook">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+        </a>
+        <a href="https://www.youtube.com/channel/UCaPm5MMOKsJ3Swpit-ul9aA" target="_blank" rel="noopener noreferrer" class="social-btn youtube" title="Follow LinuxPedia on YouTube" aria-label="YouTube">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/>
+            <polygon points="10 15 15 12 10 9" fill="currentColor"/>
+          </svg>
+        </a>
+        <a href="mailto:pedialinux@gmail.com" class="social-btn email" title="Contact Us: pedialinux@gmail.com" aria-label="Email">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </a>
+      </div>
+      <div class="footer-contact">
+        Contact us: <a href="mailto:pedialinux@gmail.com">pedialinux@gmail.com</a>
+      </div>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a> • 
+        <a href="disclaimer.html">Ethical Hacking Disclaimer &amp; Terms</a>
+      </div>
+      <p style="margin-top: 10px;">&copy; 2026 LinuxPedia. Independent &amp; Open Source.</p>
+    </div>
+  </footer>
+
+  <!-- Floating Back to Top Button -->
+  <button id="back-to-top" class="back-to-top" title="Scroll to top" aria-label="Scroll to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m18 15-6-6-6 6"/>
+    </svg>
+  </button>
+
+  <script src="script.js"></script>
+</body>
+</html>
