@@ -33,6 +33,7 @@
         <span class="logo-text">LinuxPedia</span>
       </a>
       <div class="nav-right">
+        <!-- Social Media & Contact Links -->
         <div class="social-links">
           <a href="https://www.instagram.com/pedialinux/" target="_blank" rel="noopener noreferrer" class="social-btn instagram" title="Follow LinuxPedia on Instagram" aria-label="Instagram">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
@@ -50,27 +51,27 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
           </a>
         </div>
-        <button id="theme-toggle" class="theme-toggle" title="Toggle Dark/Light Mode" aria-label="Toggle Dark/Light Mode">
-          <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-          <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-        </button>
+        <button id="theme-toggle" class="theme-btn">🌙 Dark</button>
       </div>
     </div>
   </header>
 
-  <!-- Main Article Content -->
-  <main class="container">
-    <div class="post-detail">
+  <!-- Article Body -->
+  <main class="article-container">
+    <a href="index.html" class="back-link">&larr; Back to all articles</a>
+
+    <article class="post-header">
       <span class="badge badge-hacking">Ethical Hacking</span>
       <h1>DNS Spoofing Explained: How Attackers Hijack Your Browser (And How to Defend)</h1>
-      <div class="post-meta">
-        <span>November 2026</span>
-        <span>By LinuxPedia</span>
-        <span>8 min read</span>
+      <div class="meta">
+        Published on <strong>November 2026</strong> • By <strong>LinuxPedia</strong> • 8 min read
       </div>
+    </article>
 
-      <div class="callout warning">
-        <strong>Educational Purpose Only:</strong> The techniques discussed here demonstrate network vulnerabilities to help system administrators, security students, and home users configure encrypted DNS defenses. Testing these methods against unauthorized networks violates national and international computer fraud laws.
+    <div class="post-content">
+
+      <div class="notice warning">
+        <strong>⚖️ Ethical Legal Notice:</strong> The techniques discussed here demonstrate network vulnerabilities to help system administrators, security students, and home users configure encrypted DNS defenses. Testing these methods against unauthorized networks violates national and international computer security laws.
       </div>
 
       <p>
@@ -96,19 +97,21 @@
       </p>
 
       <ol>
-        <li>Your OS checks its local DNS cache and hosts file.</li>
+        <li>Your operating system checks its local DNS cache and hosts file.</li>
         <li>If missing, it sends a DNS query packet to your configured resolver (usually assigned by your local Wi-Fi router).</li>
         <li>The resolver queries root servers, Top-Level Domain (TLD) servers, and authoritative nameservers until it finds the IP address.</li>
         <li>The resolver returns that IP to your computer.</li>
       </ol>
 
-      <div class="terminal-block">
+      <div class="terminal">
         <div class="terminal-header">
-          <span class="terminal-dot red"></span>
-          <span class="terminal-dot yellow"></span>
-          <span class="terminal-dot green"></span>
-          <span class="terminal-title">bash - standard dns lookup query</span>
-          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>bash - standard dns lookup query with dig</span>
+          <button class="copy-btn">Copy</button>
         </div>
         <pre><code>$ dig example.com A +noall +answer
 
@@ -118,13 +121,13 @@ example.com.            3600    IN      A       93.184.215.14</code></pre>
       </div>
 
       <p>
-        Here is the vulnerability: traditional DNS queries travel over <strong>UDP port 53</strong> in plain, unauthenticated text. There is no cryptographic signature verifying that the response came from the real server, and no encryption preventing someone on the local network from reading or faking the answer.
+        Here is the fundamental vulnerability: traditional DNS queries travel over <strong>UDP port 53</strong> in plain, unauthenticated text. There is no cryptographic signature verifying that the response came from the real server, and no encryption preventing someone on the local network from reading or faking the answer.
       </p>
 
       <h2>2. How DNS Spoofing Works on Local Wi-Fi</h2>
 
       <p>
-        On a shared local network, an attacker does not need to hack the world root servers. They can poison the lookup right between your laptop and your local router using two primary methods:
+        On a shared local network, an attacker does not need to compromise global root servers. They can poison the lookup right between your laptop and your local router using two primary methods:
       </p>
 
       <h3>Method A: Rogue DHCP and DNS Server</h3>
@@ -137,13 +140,15 @@ example.com.            3600    IN      A       93.184.215.14</code></pre>
         If the router is already configured, an attacker can use ARP cache poisoning to position themselves as the Man-in-the-Middle (MitM). They send gratuitous ARP replies telling your machine that the attacker MAC address belongs to the router IP.
       </p>
 
-      <div class="terminal-block">
+      <div class="terminal">
         <div class="terminal-header">
-          <span class="terminal-dot red"></span>
-          <span class="terminal-dot yellow"></span>
-          <span class="terminal-dot green"></span>
-          <span class="terminal-title">bash - observing arp table manipulation</span>
-          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>bash - observing arp table manipulation</span>
+          <button class="copy-btn">Copy</button>
         </div>
         <pre><code>$ ip neighbor show
 # Target gateway ARP entry poisoned to match attacker MAC
@@ -155,13 +160,15 @@ example.com.            3600    IN      A       93.184.215.14</code></pre>
         Once traffic passes through the attacker machine, their packet filter listens for incoming UDP 53 packets. When your computer asks "What is the IP of target-site.com?", the attacker immediately injects a forged DNS response packet with a matching Transaction ID:
       </p>
 
-      <div class="terminal-block">
+      <div class="terminal">
         <div class="terminal-header">
-          <span class="terminal-dot red"></span>
-          <span class="terminal-dot yellow"></span>
-          <span class="terminal-dot green"></span>
-          <span class="terminal-title">dns spoofing response packet structure</span>
-          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>wireshark - dns response packet race</span>
+          <button class="copy-btn">Copy</button>
         </div>
         <pre><code>[Client Request]
 Query: target-site.com (Type A) -> Sent to 192.168.1.1:53
@@ -191,13 +198,15 @@ Response: target-site.com -> 93.184.215.14 (Legitimate IP)</code></pre>
         <li>The server responds with an HTTP 302 redirect sending the user back to the authentic website, making it appear like a minor network glitch.</li>
       </ol>
 
-      <div class="terminal-block">
+      <div class="terminal">
         <div class="terminal-header">
-          <span class="terminal-dot red"></span>
-          <span class="terminal-dot yellow"></span>
-          <span class="terminal-dot green"></span>
-          <span class="terminal-title">captured http post log on rogue server</span>
-          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>server.log - captured http post on rogue portal</span>
+          <button class="copy-btn">Copy</button>
         </div>
         <pre><code>[HARVESTED POST REQUEST - /api/v1/auth]
 Host: target-site.com
@@ -205,6 +214,11 @@ Origin: http://target-site.com
 User-Agent: Mozilla/5.0 (X11; Linux x86_64) ...
 Payload: username=developer_alex&amp;password=SuperSecretPassword2026!
 Action: Credential written to access.log -> Redirecting client to genuine URL</code></pre>
+      </div>
+
+      <div class="notice">
+        <strong>💡 Why Captive Portals Condition Bad Habits:</strong><br>
+        Public Wi-Fi networks in airports and cafes regularly force users to accept redirection to captive portal splash pages. Attackers take advantage of this muscle memory because people expect popups and login forms when connecting to public networks.
       </div>
 
       <h2>4. Why HTTPS Throws Warnings (And Why People Click Through)</h2>
@@ -242,13 +256,15 @@ Action: Credential written to access.log -> Redirecting client to genuine URL</c
         On modern Linux distributions (Ubuntu, Debian, Fedora), <code>systemd-resolved</code> can enforce DNS-over-TLS (DoT) across all applications, not just your web browser.
       </p>
 
-      <div class="terminal-block">
+      <div class="terminal">
         <div class="terminal-header">
-          <span class="terminal-dot red"></span>
-          <span class="terminal-dot yellow"></span>
-          <span class="terminal-dot green"></span>
-          <span class="terminal-title">/etc/systemd/resolved.conf - encrypted dns configuration</span>
-          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>/etc/systemd/resolved.conf - systemd encrypted dns</span>
+          <button class="copy-btn">Copy</button>
         </div>
         <pre><code>[Resolve]
 # Primary and fallback encrypted Quad9 / Cloudflare servers
@@ -262,13 +278,15 @@ DNSSEC=yes</code></pre>
         After editing the configuration file, restart the resolved service to lock in your encrypted lookups:
       </p>
 
-      <div class="terminal-block">
+      <div class="terminal">
         <div class="terminal-header">
-          <span class="terminal-dot red"></span>
-          <span class="terminal-dot yellow"></span>
-          <span class="terminal-dot green"></span>
-          <span class="terminal-title">bash - apply and verify secure dns status</span>
-          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>bash - verify encrypted dns status</span>
+          <button class="copy-btn">Copy</button>
         </div>
         <pre><code>$ sudo systemctl restart systemd-resolved
 $ resolvectl status
