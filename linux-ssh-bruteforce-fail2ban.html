@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSH Brute-Force Attacks Explained: How Bots Target Port 22 (And How Fail2ban Jails Them) - LinuxPedia</title>
+  <meta name="description" content="A practical guide to SSH brute-force attacks on Linux servers. Learn how automated botnets scan port 22, how to inspect auth.log, and how to configure Fail2ban to ban attackers automatically.">
+  <meta name="google-site-verification" content="cBMbyyNKt8IDdu6YmULkjBzNTZfEZ_PSIlwlpaiqn7s" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://pedialinux.github.io/linuxpedia/linux-ssh-bruteforce-fail2ban.html">
+  <meta property="og:title" content="SSH Brute-Force Attacks Explained: How Fail2ban Jails Hackers - LinuxPedia">
+  <meta property="og:description" content="See what automated SSH attacks look like inside auth.log, and configure Fail2ban to automatically block malicious IP addresses.">
+  <meta property="og:image" content="https://pedialinux.github.io/linuxpedia/banner.jpg">
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SSH Brute-Force Attacks Explained: How Fail2ban Jails Hackers - LinuxPedia">
+  <meta name="twitter:description" content="A practical walkthrough of SSH dictionary attacks, log monitoring, and automated firewall jailing with Fail2ban.">
+  <meta name="twitter:image" content="https://pedialinux.github.io/linuxpedia/banner.jpg">
+
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Google tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-C7PCNEGGVV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-C7PCNEGGVV');
+  </script>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="container nav-wrapper">
+      <a href="index.html" class="logo">
+        <img src="logo.jpg" alt="LinuxPedia Logo" class="logo-img">
+        <span class="logo-text">LinuxPedia</span>
+      </a>
+      <div class="nav-right">
+        <!-- Social Media & Contact Links -->
+        <div class="social-links">
+          <a href="https://www.instagram.com/pedialinux/" target="_blank" rel="noopener noreferrer" class="social-btn instagram" title="Follow LinuxPedia on Instagram" aria-label="Instagram">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+          </a>
+          <a href="https://www.facebook.com/pedialinux" target="_blank" rel="noopener noreferrer" class="social-btn facebook" title="Follow LinuxPedia on Facebook" aria-label="Facebook">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+          </a>
+          <a href="https://www.youtube.com/channel/UCaPm5MMOKsJ3Swpit-ul9aA" target="_blank" rel="noopener noreferrer" class="social-btn youtube" title="Follow LinuxPedia on YouTube" aria-label="YouTube">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/>
+              <polygon points="10 15 15 12 10 9" fill="currentColor"/>
+            </svg>
+          </a>
+          <a href="mailto:pedialinux@gmail.com" class="social-btn email" title="Contact Us: pedialinux@gmail.com" aria-label="Email">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </a>
+        </div>
+        <button id="theme-toggle" class="theme-btn">🌙 Dark</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Article Body -->
+  <main class="article-container">
+    <a href="index.html" class="back-link">&larr; Back to all articles</a>
+
+    <article class="post-header">
+      <span class="badge badge-linux">Linux &amp; SysAdmin</span>
+      <h1>SSH Brute-Force Attacks Explained: How Bots Target Port 22 (And How Fail2ban Jails Them)</h1>
+      <div class="meta">
+        Published on <strong>November 2026</strong> • By <strong>LinuxPedia</strong> • 8 min read
+      </div>
+    </article>
+
+    <div class="post-content">
+
+      <div class="notice warning">
+        <strong>⚖️ Educational Defense Notice:</strong> This guide explains real-world automated brute-force attacks against SSH servers and shows how to set up active intrusion prevention. Practicing brute-force credential stuffing against systems you do not own violates the Computer Fraud and Abuse Act and international cybersecurity laws.
+      </div>
+
+      <p>
+        The moment you spin up a brand new Linux server on AWS, DigitalOcean, Hetzner, or Linode, a timer starts ticking. Within ten to fifteen minutes of your public IP address appearing on the internet, automated botnets will find your machine and begin attempting to log in.
+      </p>
+
+      <p>
+        They do not need to know who you are. Massive global scanning networks constantly sweep the entire IPv4 address space, probing TCP port 22. When they find an open SSH listener, an automated dictionary attack kicks off: testing hundreds of common usernames and passwords every minute.
+      </p>
+
+      <p>
+        In this guide, we look at the raw logs of an active SSH brute-force attack, examine why weak passwords fail against dictionary scripts, and configure <strong>Fail2ban</strong> to automatically detect and block malicious IP addresses before they guess correctly.
+      </p>
+
+      <h2>1. The Raw Firehose: What an SSH Attack Looks Like</h2>
+
+      <p>
+        Every SSH connection attempt is recorded by your Linux operating system. On Debian and Ubuntu servers, SSH logs to <code>/var/log/auth.log</code>. On RHEL, Rocky, and Fedora systems, it logs to <code>/var/log/secure</code> or systemd journal.
+      </p>
+
+      <p>
+        If you run a live stream on your authentication log on any fresh cloud server, this is what you will witness:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>bash - live stream of incoming authentication attempts</span>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>$ sudo tail -f /var/log/auth.log | grep "Failed password"
+
+Nov 10 03:14:12 server sshd[18420]: Failed password for invalid user admin from 185.220.101.5 port 41232 ssh2
+Nov 10 03:14:15 server sshd[18422]: Failed password for invalid user ubuntu from 185.220.101.5 port 41238 ssh2
+Nov 10 03:14:18 server sshd[18425]: Failed password for root from 185.220.101.5 port 41244 ssh2
+Nov 10 03:14:21 server sshd[18429]: Failed password for invalid user test from 185.220.101.5 port 41250 ssh2
+Nov 10 03:14:24 server sshd[18433]: Failed password for invalid user oracle from 185.220.101.5 port 41256 ssh2</code></pre>
+      </div>
+
+      <p>
+        Notice the cadence: every three seconds, the same remote IP address (<code>185.220.101.5</code>) attempts a new credential pair. The script cycles through common default system accounts: <code>admin</code>, <code>ubuntu</code>, <code>root</code>, <code>test</code>, <code>oracle</code>, <code>git</code>, and <code>postgres</code>.
+      </p>
+
+      <p>
+        If your server allows password authentication and has a common password like <code>password123</code> or <code>admin2026</code>, a dictionary attack will eventually succeed. Even if your password is strong, hundreds of thousands of failed attempts waste server memory, flood log files, and consume CPU cycles.
+      </p>
+
+      <h2>2. Enter Fail2ban: The Automated Digital Bouncer</h2>
+
+      <p>
+        A firewall like UFW or iptables is static: it either opens port 22 to everyone or blocks port 22 completely. If you block port 22, you cannot administer your server remotely. If you open port 22, botnets hammer it.
+      </p>
+
+      <p>
+        <strong>Fail2ban</strong> bridges this gap by making your firewall dynamic:
+      </p>
+
+      <ol>
+        <li>It monitors system log files in real time (using Python regex filters).</li>
+        <li>It counts failed authentication attempts from each unique IP address within a configurable time window.</li>
+        <li>When an IP exceeds the threshold (e.g. 3 failed logins within 10 minutes), Fail2ban dynamically injects a temporary drop rule into your firewall (iptables or nftables).</li>
+        <li>Any further packets from that attacking IP are silently discarded before they even reach the SSH daemon.</li>
+        <li>Once the ban duration expires (e.g. 24 hours), Fail2ban removes the firewall rule automatically.</li>
+      </ol>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>flow - how fail2ban operates in memory</span>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>[Attacker IP: 185.220.101.5]
+    |
+    v
+[Port 22 SSH Attempt 1] -> Fails -> auth.log (Fail count: 1)
+[Port 22 SSH Attempt 2] -> Fails -> auth.log (Fail count: 2)
+[Port 22 SSH Attempt 3] -> Fails -> auth.log (Fail count: 3 -> THRESHOLD REACHED!)
+    |
+    v
+[Fail2ban Action Triggered]
+    |--> iptables -I INPUT -s 185.220.101.5 -j DROP
+    |
+    v
+[Attempt 4+] -> Packets dropped at kernel level. Zero CPU/SSH overhead.</code></pre>
+      </div>
+
+      <h2>3. Installing and Configuring Fail2ban on Ubuntu / Debian</h2>
+
+      <p>
+        Setting up Fail2ban takes less than three minutes. First, update your package repository and install the daemon:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>bash - installing fail2ban</span>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>sudo apt update
+sudo apt install -y fail2ban</code></pre>
+      </div>
+
+      <h3>The Golden Rule: Never Edit jail.conf Directly</h3>
+
+      <p>
+        Fail2ban ships with a default configuration file located at <code>/etc/fail2ban/jail.conf</code>. Whenever the package updates through <code>apt upgrade</code>, this file can get overwritten.
+      </p>
+
+      <p>
+        Always create a local override file called <code>jail.local</code>. Any setting you specify in <code>jail.local</code> takes precedence over <code>jail.conf</code>:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>bash - create custom jail configuration</span>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+sudo nano /etc/fail2ban/jail.local</code></pre>
+      </div>
+
+      <h2>4. Recommended Production Jail Settings</h2>
+
+      <p>
+        Inside <code>/etc/fail2ban/jail.local</code>, find the <code>[DEFAULT]</code> and <code>[sshd]</code> sections. Configure these essential parameters:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>/etc/fail2ban/jail.local - hardened ssh jail settings</span>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>[DEFAULT]
+# Never ban your own home or office IP address (whitelist)
+ignoreip = 127.0.0.1/8 ::1 203.0.113.45
+
+# How long the attacker is banned (e.g. 1d = 24 hours, 1h = 1 hour)
+bantime = 1d
+
+# Time window in which failed attempts are tracked
+findtime = 10m
+
+# Number of failed attempts before ban triggers
+maxretry = 3
+
+[sshd]
+enabled = true
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 3
+bantime = 1d</code></pre>
+      </div>
+
+      <div class="notice">
+        <strong>💡 Always Whitelist Your Own IP:</strong><br>
+        Make sure to add your own public IP address to the <code>ignoreip</code> directive. If you accidentally misplace an SSH key or mistype a passphrase three times, you do not want your own server locking you out for 24 hours.
+      </div>
+
+      <p>
+        Save the file and restart the Fail2ban service to activate your new rules:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>bash - restarting fail2ban and verifying status</span>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>sudo systemctl restart fail2ban
+sudo systemctl enable fail2ban
+sudo fail2ban-client status</code></pre>
+      </div>
+
+      <h2>5. Watching Fail2ban Jail Attackers in Real Time</h2>
+
+      <p>
+        Once Fail2ban is running, you can monitor active jails using the <code>fail2ban-client</code> command-line utility. Check the specific status of the SSH jail:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>bash - inspecting currently jailed hacker ips</span>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>$ sudo fail2ban-client status sshd
+
+Status for the jail: sshd
+|- Filter
+|  |- Currently failed: 2
+|  |- Total failed:     418
+|  `- File list:        /var/log/auth.log
+`- Actions
+   |- Currently banned: 3
+   |- Total banned:     37
+   `- Banned IP list:   185.220.101.5 194.26.29.112 45.154.255.89</code></pre>
+      </div>
+
+      <p>
+        In this output, Fail2ban detected 418 total failed login attempts, identified repeat offenders, and actively jailed 3 IP addresses right now. Those machines are completely blocked at the kernel network layer.
+      </p>
+
+      <h3>How to Manually Unban an IP Address</h3>
+
+      <p>
+        If a colleague or friend gets accidentally banned after entering the wrong password, you can unban their IP address immediately from your terminal:
+      </p>
+
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span>bash - unban a specific ip address</span>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <pre><code>sudo fail2ban-client set sshd unbanip 185.220.101.5</code></pre>
+      </div>
+
+      <h2>6. The 3 Ultimate Rules for Bulletproof SSH Defense</h2>
+
+      <p>
+        Fail2ban is your active line of defense, but true server hardening requires combining it with these three fundamental habits:
+      </p>
+
+      <ul>
+        <li><strong>Disable Password Authentication Completely:</strong> Passwords can be guessed; 4096-bit RSA or Ed25519 cryptographic keys cannot. Set <code>PasswordAuthentication no</code> in <code>/etc/ssh/sshd_config</code>.</li>
+        <li><strong>Disable Direct Root Login:</strong> Bots target <code>root</code> by default because it is universally present on all Unix machines. Create a standard sudo user and set <code>PermitRootLogin no</code>.</li>
+        <li><strong>Move Off Port 22:</strong> Changing your SSH listening port to a non-standard port (such as <code>Port 2222</code> or <code>Port 48921</code>) eliminates 98% of dumb, automated mass-scanning scripts before they even touch your firewall.</li>
+      </ul>
+
+      <h2>Summary Checklist</h2>
+
+      <ul>
+        <li>Automated botnets constantly sweep IPv4 for open SSH port 22 listeners.</li>
+        <li>Inspect live attack attempts with <code>tail -f /var/log/auth.log</code>.</li>
+        <li>Fail2ban dynamically monitors log files and injects firewall drop rules.</li>
+        <li>Always edit <code>jail.local</code>, never the default <code>jail.conf</code>.</li>
+        <li>Whitelist your home/office IP in <code>ignoreip</code> to prevent accidental self-lockout.</li>
+        <li>Verify active jails with <code>sudo fail2ban-client status sshd</code>.</li>
+      </ul>
+
+      <p>
+        Setting up Fail2ban gives your Linux servers automated resilience against internet noise. Once configured, you can sleep soundly knowing brute-force bots get stopped in their tracks.
+      </p>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-socials">
+        <a href="https://www.instagram.com/pedialinux/" target="_blank" rel="noopener noreferrer" class="social-btn instagram" title="Follow LinuxPedia on Instagram" aria-label="Instagram">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+        </a>
+        <a href="https://www.facebook.com/pedialinux" target="_blank" rel="noopener noreferrer" class="social-btn facebook" title="Follow LinuxPedia on Facebook" aria-label="Facebook">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+        </a>
+        <a href="https://www.youtube.com/channel/UCaPm5MMOKsJ3Swpit-ul9aA" target="_blank" rel="noopener noreferrer" class="social-btn youtube" title="Follow LinuxPedia on YouTube" aria-label="YouTube">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/>
+            <polygon points="10 15 15 12 10 9" fill="currentColor"/>
+          </svg>
+        </a>
+        <a href="mailto:pedialinux@gmail.com" class="social-btn email" title="Contact Us: pedialinux@gmail.com" aria-label="Email">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </a>
+      </div>
+      <div class="footer-contact">
+        Contact us: <a href="mailto:pedialinux@gmail.com">pedialinux@gmail.com</a>
+      </div>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a> • 
+        <a href="disclaimer.html">Ethical Hacking Disclaimer &amp; Terms</a>
+      </div>
+      <p style="margin-top: 10px;">&copy; 2026 LinuxPedia. Independent &amp; Open Source.</p>
+    </div>
+  </footer>
+
+  <!-- Floating Back to Top Button -->
+  <button id="back-to-top" class="back-to-top" title="Scroll to top" aria-label="Scroll to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m18 15-6-6-6 6"/>
+    </svg>
+  </button>
+
+  <script src="script.js"></script>
+</body>
+</html>

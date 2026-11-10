@@ -24,25 +24,17 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="stylesheet" href="style.css">
 
-  <!-- Google Tag Manager / Google Tag -->
-  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-KCRBZMMT');</script>
+  <!-- Google tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-C7PCNEGGVV"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
+
+    gtag('config', 'G-C7PCNEGGVV');
   </script>
-  <!-- End Google Tag Manager -->
 </head>
 <body>
-
-  <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KCRBZMMT"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  <!-- End Google Tag Manager (noscript) -->
 
   <!-- Top Navigation Header -->
   <header>
@@ -101,6 +93,14 @@
   <!-- Main Content: Your Blog Posts -->
   <main class="container">
     <div class="posts-grid" id="posts-container">
+
+      <!-- Published Article 6 -->
+      <article class="post-card" data-category="linux">
+        <span class="badge badge-linux">Linux &amp; SysAdmin</span>
+        <h2><a href="linux-ssh-bruteforce-fail2ban.html">SSH Brute-Force Attacks Explained: How Bots Target Port 22 (And How Fail2ban Jails Them)</a></h2>
+        <p>A practical breakdown of automated SSH attacks on cloud servers. See live auth.log dictionary attempts and configure Fail2ban to ban attacking IPs in real time.</p>
+        <div class="post-date">📅 November 2026 • By LinuxPedia • 8 min read</div>
+      </article>
 
       <!-- Published Article 5 -->
       <article class="post-card" data-category="hacking">
