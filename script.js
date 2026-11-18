@@ -1,5 +1,20 @@
 // LinuxPedia - Pure Vanilla JavaScript (No libraries, zero setup)
 
+// Global copyCode fallback for inline onclick handlers
+window.copyCode = function (btn) {
+  const terminal = btn.closest('.terminal') || btn.parentElement;
+  const codeBlock = terminal ? terminal.querySelector('code, pre') : null;
+  if (codeBlock) {
+    navigator.clipboard.writeText(codeBlock.innerText.trim()).then(function () {
+      const original = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(function () {
+        btn.textContent = original;
+      }, 1500);
+    });
+  }
+};
+
 document.addEventListener('DOMContentLoaded', function () {
   // 1. Dark / Light Theme Toggle
   const themeBtn = document.getElementById('theme-toggle');
